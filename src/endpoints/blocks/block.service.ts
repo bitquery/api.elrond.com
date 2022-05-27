@@ -4,6 +4,7 @@ import { BlockDetailed } from "./entities/block.detailed";
 import { CachingService } from "src/common/caching/caching.service";
 import { BlockFilter } from "./entities/block.filter";
 import { QueryPagination } from "src/common/entities/query.pagination";
+import { TermsQuery } from "src/common/elastic/entities/terms.query";
 import { BlsService } from "src/endpoints/bls/bls.service";
 import { Constants } from "src/utils/constants";
 import { QueryConditionOptions } from "src/common/elastic/entities/query.condition.options";
@@ -66,7 +67,7 @@ export class BlockService {
     );
   }
 
-  async getBlocks(filter: BlockFilter, queryPagination: QueryPagination): Promise<Block[]> {
+  async getBlocks(filter: BlockFilter, queryPagination: QueryPagination): Promise<BlockDetailed[]> {
     const { from, size } = queryPagination;
 
     let elasticQuery = ElasticQuery.create()
@@ -84,7 +85,15 @@ export class BlockService {
     for (const item of result) {
       const blockRaw = await this.computeProposerAndValidators(item);
 
-      const block = Block.mergeWithElasticResponse(new Block(), blockRaw);
+      if (blockRaw.round > 0) {
+        const publicKeys = await this.blsService.getPublicKeys(blockRaw.shardId, blockRaw.epoch);
+        blockRaw.proposer = publicKeys[blockRaw.proposer];
+        blockRaw.validators = blockRaw.validators.map((validator: number) => publicKeys[validator]);
+      } else {
+        blockRaw.validators = [];
+      }
+
+      const block = Block.mergeWithElasticResponse(new BlockDetailed(), blockRaw);
       blocks.push(block);
     }
 
