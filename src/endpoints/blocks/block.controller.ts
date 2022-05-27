@@ -3,6 +3,7 @@ import { ApiExcludeEndpoint, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swag
 import { ParseBlockHashPipe } from "src/utils/pipes/parse.block.hash.pipe";
 import { ParseBlsHashPipe } from "src/utils/pipes/parse.bls.hash.pipe";
 import { ParseOptionalIntPipe } from "src/utils/pipes/parse.optional.int.pipe";
+import { ParseArrayPipe } from 'src/utils/pipes/parse.array.pipe';
 import { BlockService } from "./block.service";
 import { Block } from "./entities/block";
 import { BlockDetailed } from "./entities/block.detailed";
@@ -26,6 +27,7 @@ export class BlockController {
   @ApiQuery({ name: 'from', description: 'Numer of items to skip for the result set', required: false })
   @ApiQuery({ name: 'size', description: 'Number of items to retrieve', required: false })
   @ApiQuery({ name: 'nonce', description: 'Filter by nonce', required: false })
+  @ApiQuery({ name: 'nonces', description: 'Filter by a comma-separated list of block nonces', required: false })
   getBlocks(
     @Query('shard', ParseOptionalIntPipe) shard: number | undefined,
     @Query('proposer', ParseBlsHashPipe) proposer: string | undefined,
@@ -34,8 +36,9 @@ export class BlockController {
     @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number,
     @Query("size", new DefaultValuePipe(25), ParseIntPipe) size: number,
     @Query('nonce', ParseOptionalIntPipe) nonce: number | undefined,
-  ): Promise<Block[]> {
-    return this.blockService.getBlocks({ shard, proposer, validator, epoch, nonce }, { from, size });
+    @Query('nonces', ParseArrayPipe) nonces: string[] | undefined,
+  ): Promise<BlockDetailed[]> {
+    return this.blockService.getBlocks({ shard, proposer, validator, epoch, nonce, nonces }, { from, size });
   }
 
   @Get("/blocks/count")

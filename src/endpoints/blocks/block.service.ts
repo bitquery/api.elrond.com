@@ -69,10 +69,14 @@ export class BlockService {
   async getBlocks(filter: BlockFilter, queryPagination: QueryPagination): Promise<Block[]> {
     const { from, size } = queryPagination;
 
-    const elasticQuery = ElasticQuery.create()
+    let elasticQuery = ElasticQuery.create()
       .withPagination({ from, size })
       .withSort([{ name: 'timestamp', order: ElasticSortOrder.descending }])
       .withCondition(QueryConditionOptions.must, await this.buildElasticBlocksFilter(filter));
+
+    if (filter.nonces) {
+      elasticQuery = elasticQuery.withCondition(QueryConditionOptions.must, new TermsQuery('nonce', filter.nonces, true))
+    }
 
     const result = await this.elasticService.getList('blocks', 'hash', elasticQuery);
 
