@@ -173,9 +173,13 @@ export class TransactionService {
     const timestamp: ElasticSortProperty = { name: 'timestamp', order: sortOrder };
     const nonce: ElasticSortProperty = { name: 'nonce', order: sortOrder };
 
-    const elasticQuery = this.buildTransactionFilterQuery(filter, address)
+    let elasticQuery = this.buildTransactionFilterQuery(filter, address)
       .withPagination({ from: pagination.from, size: pagination.size })
       .withSort([timestamp, nonce]);
+
+    if (filter.miniBlockHashes) {
+      elasticQuery = elasticQuery.withCondition(QueryConditionOptions.must, new TermsQuery('miniBlockHash', filter.miniBlockHashes, true))
+    }
 
     const elasticTransactions = await this.elasticService.getList('transactions', 'txHash', elasticQuery);
 

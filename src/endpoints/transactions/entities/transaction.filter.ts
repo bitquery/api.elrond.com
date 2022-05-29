@@ -11,6 +11,7 @@ export class TransactionFilter {
     senderShard?: number;
     receiverShard?: number;
     miniBlockHash?: string;
+    miniBlockHashes?: string[];
     hashes?: string[];
     status?: TransactionStatus;
     search?: string;

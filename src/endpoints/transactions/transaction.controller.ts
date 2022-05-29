@@ -35,6 +35,7 @@ export class TransactionController {
   @ApiQuery({ name: 'senderShard', description: 'Id of the shard the sender address belongs to', required: false })
   @ApiQuery({ name: 'receiverShard', description: 'Id of the shard the receiver address belongs to', required: false })
   @ApiQuery({ name: 'miniBlockHash', description: 'Filter by miniblock hash', required: false })
+  @ApiQuery({ name: 'miniBlockHashes', description: 'Filter by a comma-separated list of miniblock hashes', required: false })
   @ApiQuery({ name: 'hashes', description: 'Filter by a comma-separated list of transaction hashes', required: false })
   @ApiQuery({ name: 'status', description: 'Status of the transaction (success / pending / invalid)', required: false })
   @ApiQuery({ name: 'search', description: 'Search in data object', required: false })
@@ -55,6 +56,7 @@ export class TransactionController {
     @Query('senderShard', ParseOptionalIntPipe) senderShard: number | undefined,
     @Query('receiverShard', ParseOptionalIntPipe) receiverShard: number | undefined,
     @Query('miniBlockHash', ParseBlockHashPipe) miniBlockHash: string | undefined,
+    @Query('miniBlockHashes', ParseArrayPipe) miniBlockHashes: string[] | undefined,
     @Query('hashes', ParseArrayPipe) hashes: string[] | undefined,
     @Query('status', new ParseOptionalEnumPipe(TransactionStatus)) status: TransactionStatus | undefined,
     @Query('search') search: string | undefined,
@@ -69,10 +71,6 @@ export class TransactionController {
     @Query('withOperations', new ParseOptionalBoolPipe) withOperations: boolean | undefined,
     @Query('withLogs', new ParseOptionalBoolPipe) withLogs: boolean | undefined,
   ): Promise<Transaction[]> {
-    if ((withScResults === true || withOperations === true || withLogs) && size > 50) {
-      throw new BadRequestException(`Maximum size of 50 is allowed when activating flags 'withScResults', 'withOperations' or 'withLogs'`);
-    }
-
     return this.transactionService.getTransactions({
       sender,
       receiver,
@@ -81,6 +79,7 @@ export class TransactionController {
       senderShard,
       receiverShard,
       miniBlockHash,
+      miniBlockHashes,
       hashes,
       status,
       search,
