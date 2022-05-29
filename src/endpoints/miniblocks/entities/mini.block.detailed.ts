@@ -21,4 +21,7 @@ export class MiniBlockDetailed {
 
     @ApiProperty()
     type: string = '';
+
+    @ApiProperty()
+    transactions: string[] = [];
 }
