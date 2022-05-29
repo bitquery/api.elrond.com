@@ -1,10 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { Block } from "./entities/block";
 import { BlockDetailed } from "./entities/block.detailed";
+import { MiniBlockService } from "src/endpoints/miniblocks/mini.block.service";
+import { TransactionService } from "src/endpoints/transactions/transaction.service";
 import { CachingService } from "src/common/caching/caching.service";
 import { BlockFilter } from "./entities/block.filter";
 import { QueryPagination } from "src/common/entities/query.pagination";
-import { TermsQuery } from "src/common/elastic/entities/terms.query";
+// import { TermsQuery } from "src/common/elastic/entities/terms.query";
 import { BlsService } from "src/endpoints/bls/bls.service";
 import { Constants } from "src/utils/constants";
 import { QueryConditionOptions } from "src/common/elastic/entities/query.condition.options";
@@ -21,6 +23,8 @@ export class BlockService {
     private readonly elasticService: ElasticService,
     private readonly cachingService: CachingService,
     private readonly blsService: BlsService,
+    private readonly miniblockService: MiniBlockService,
+    private readonly transactionService: TransactionService,
   ) { }
 
   private async buildElasticBlocksFilter(filter: BlockFilter): Promise<AbstractQuery[]> {
@@ -75,11 +79,36 @@ export class BlockService {
       .withSort([{ name: 'timestamp', order: ElasticSortOrder.descending }])
       .withCondition(QueryConditionOptions.must, await this.buildElasticBlocksFilter(filter));
 
-    if (filter.nonces) {
-      elasticQuery = elasticQuery.withCondition(QueryConditionOptions.must, new TermsQuery('nonce', filter.nonces, true))
+    if (filter.nonce_between) {
+      const start = filter.nonce_between[0]
+      const end = filter.nonce_between[1]
+      elasticQuery = elasticQuery.withCondition(QueryConditionOptions.must, QueryType.Range("nonce", end, start));
     }
 
-    const result = await this.elasticService.getList('blocks', 'hash', elasticQuery);
+    let result = await this.elasticService.getList('blocks', 'hash', elasticQuery);
+
+    if (filter.withSenderMiniBlocks) {
+      const block_hashes = [...result.map((block) => block.hash)];
+      const miniblocks = await this.miniblockService.getMiniBlocks({senderBlockHashes: block_hashes}, {from, size})
+
+      result.map(r => r.miniBlocks = miniblocks.filter(({senderBlockHash}) => senderBlockHash == r.hash))
+
+      if (filter.withMiniBlocksTransactions) {
+        const miniblock_hashes = [...miniblocks.map((miniblock) => miniblock.miniBlockHash)]
+
+        const transaction = await this.transactionService.getTransactions(
+          { miniBlockHashes: miniblock_hashes },
+          { from, size },
+          { withLogs: true, withScResults: true, withOperations: true }
+        );
+
+        for (const r of result) {
+            r.miniBlocks.map(
+              (miniblock: any) => 
+                miniblock.transactions = transaction.filter(({miniBlockHash}) => miniblock.miniBlockHash == miniBlockHash))
+        }
+      }
+    }
 
     const blocks = [];
     for (const item of result) {

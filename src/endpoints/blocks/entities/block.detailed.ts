@@ -10,4 +10,7 @@ export class BlockDetailed extends Block {
 
     @ApiProperty()
     validators: string[] = [];
+
+    @ApiProperty()
+    miniBlocks: string[] = [];
 }

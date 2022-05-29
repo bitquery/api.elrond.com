@@ -4,5 +4,7 @@ export class BlockFilter {
   validator?: string;
   epoch?: number;
   nonce?: number;
-  nonces?: string[];
+  nonce_between?: [number, number];
+  withSenderMiniBlocks?: boolean;
+  withMiniBlocksTransactions?: boolean;
 }

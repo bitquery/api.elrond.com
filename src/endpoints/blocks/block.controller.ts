@@ -7,6 +7,7 @@ import { ParseArrayPipe } from 'src/utils/pipes/parse.array.pipe';
 import { BlockService } from "./block.service";
 import { Block } from "./entities/block";
 import { BlockDetailed } from "./entities/block.detailed";
+import { ParseOptionalBoolPipe } from "src/utils/pipes/parse.optional.bool.pipe";
 
 @Controller()
 @ApiTags('blocks')
@@ -28,6 +29,8 @@ export class BlockController {
   @ApiQuery({ name: 'size', description: 'Number of items to retrieve', required: false })
   @ApiQuery({ name: 'nonce', description: 'Filter by nonce', required: false })
   @ApiQuery({ name: 'nonces', description: 'Filter by a comma-separated list of block nonces', required: false })
+  @ApiQuery({ name: 'withSenderMiniBlocks', description: 'Return miniblocks for blocks where block in sender', required: false })
+  @ApiQuery({ name: 'withMiniBlocksTransactions', description: 'Return transactions for miniblocks in block', required: false })
   getBlocks(
     @Query('shard', ParseOptionalIntPipe) shard: number | undefined,
     @Query('proposer', ParseBlsHashPipe) proposer: string | undefined,
@@ -36,9 +39,15 @@ export class BlockController {
     @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number,
     @Query("size", new DefaultValuePipe(25), ParseIntPipe) size: number,
     @Query('nonce', ParseOptionalIntPipe) nonce: number | undefined,
-    @Query('nonces', ParseArrayPipe) nonces: string[] | undefined,
+    @Query('nonce_between', ParseArrayPipe) nonce_between: [number, number] | undefined,
+    @Query('withSenderMiniBlocks', new ParseOptionalBoolPipe) withSenderMiniBlocks: boolean | undefined,
+    @Query('withMiniBlocksTransactions', new ParseOptionalBoolPipe) withMiniBlocksTransactions: boolean | undefined,
   ): Promise<BlockDetailed[]> {
-    return this.blockService.getBlocks({ shard, proposer, validator, epoch, nonce, nonces }, { from, size });
+    return this.blockService.getBlocks({ shard, proposer, validator, epoch, 
+                                       nonce, nonce_between, withSenderMiniBlocks, 
+                                       withMiniBlocksTransactions }, 
+                                       { from, size }
+                                      );
   }
 
   @Get("/blocks/count")
