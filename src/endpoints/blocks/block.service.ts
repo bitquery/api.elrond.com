@@ -28,7 +28,7 @@ export class BlockService {
   ) { }
 
   private async buildElasticBlocksFilter(filter: BlockFilter): Promise<AbstractQuery[]> {
-    const { shard, proposer, validator, epoch, nonce } = filter;
+    const { shard, proposer, validator, epoch, nonce, nonce_between } = filter;
 
     const queries: AbstractQuery[] = [];
     if (nonce !== undefined) {
@@ -43,6 +43,14 @@ export class BlockService {
     if (epoch !== undefined) {
       const epochQuery = QueryType.Match('epoch', epoch);
       queries.push(epochQuery);
+    }
+
+    if (nonce_between !== undefined) {
+      const start = nonce_between[0]
+      const end = nonce_between[1] ? nonce_between[1] : start
+
+      const nonceQuery = QueryType.Range("nonce", end, start)
+      queries.push(nonceQuery);
     }
 
     if (proposer && shard !== undefined && epoch !== undefined) {
@@ -78,12 +86,6 @@ export class BlockService {
       .withPagination({ from, size })
       .withSort([{ name: 'timestamp', order: ElasticSortOrder.descending }])
       .withCondition(QueryConditionOptions.must, await this.buildElasticBlocksFilter(filter));
-
-    if (filter.nonce_between) {
-      const start = filter.nonce_between[0]
-      const end = filter.nonce_between[1]
-      elasticQuery = elasticQuery.withCondition(QueryConditionOptions.must, QueryType.Range("nonce", end, start));
-    }
 
     let result = await this.elasticService.getList('blocks', 'hash', elasticQuery);
 
