@@ -95,7 +95,7 @@ export class BlockService {
 
       result.map(r => r.miniBlocks = miniblocks.filter(({senderBlockHash}) => senderBlockHash == r.hash))
 
-      if (filter.withMiniBlocksTransactions) {
+      if (filter.withMiniBlocksTransactions && miniblocks.length !== 0) {
         const miniblock_hashes = [...miniblocks.map((miniblock) => miniblock.miniBlockHash)]
 
         const transaction = await this.transactionService.getTransactions(
