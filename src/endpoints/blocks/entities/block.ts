@@ -42,6 +42,9 @@ export class Block {
     txCount: number = 0;
 
     @ApiProperty()
+    miniBlocksCount: number = 0;
+
+    @ApiProperty()
     gasConsumed: number = 0;
 
     @ApiProperty()
