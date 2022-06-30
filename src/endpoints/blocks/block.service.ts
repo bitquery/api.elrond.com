@@ -91,10 +91,9 @@ export class BlockService {
 
     if (filter.withSenderMiniBlocks) {
       const block_hashes = [...result.map((block) => block.hash)];
-      const miniblocks = await this.miniblockService.getMiniBlocks({senderBlockHashes: block_hashes}, {from, size})
+      const miniblocks = await this.miniblockService.getMiniBlocks({ senderBlockHashes: block_hashes }, { from, size })
 
-      result.map(r => r.miniBlocks = miniblocks.filter(({senderBlockHash}) => senderBlockHash == r.hash))
-      result.map(r => r.miniBlocksCount = r.miniBlocks?.length)
+      result.map(r => r.miniBlocks = miniblocks.filter(({ senderBlockHash }) => senderBlockHash == r.hash))
 
       if (filter.withMiniBlocksTransactions && miniblocks.length !== 0) {
         const miniblock_hashes = [...miniblocks.map((miniblock) => miniblock.miniBlockHash)]
@@ -106,10 +105,16 @@ export class BlockService {
         );
 
         for (const r of result) {
-            r.miniBlocks.map(
-              (miniblock: any) => 
-                miniblock.transactions = transaction.filter(({miniBlockHash}) => miniblock.miniBlockHash == miniBlockHash))
+          r.miniBlocks.map(
+            (miniblock: any) =>
+              miniblock.transactions = transaction.filter(({ miniBlockHash }) => miniblock.miniBlockHash == miniBlockHash)
+          )
         }
+
+        result.map(r => r.miniBlocksCount = r.miniBlocks?.length)
+        result.map(r => 
+                   r.txCount = r.miniBlocks?.reduce((sum: number, item: any) => sum +  item.transactions?.length, 0)
+                  )
       }
     }
 
