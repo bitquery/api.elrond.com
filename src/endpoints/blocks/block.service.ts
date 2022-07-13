@@ -109,12 +109,10 @@ export class BlockService {
             (miniblock: any) =>
               miniblock.transactions = transaction.filter(({ miniBlockHash }) => miniblock.miniBlockHash == miniBlockHash)
           )
-        }
 
-        result.map(r => r.miniBlocksCount = r.miniBlocks?.length)
-        result.map(r => 
-                   r.txCount = r.miniBlocks?.reduce((sum: number, item: any) => sum +  item.transactions?.length, 0)
-                  )
+          r.miniBlocksCount = r.miniBlocks?.length
+          r.txCount = r.miniBlocks?.reduce((sum: number, item: any) => sum +  item.transactions?.length, 0)
+        }
       }
     }
 
