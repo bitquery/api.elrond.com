@@ -606,8 +606,8 @@ export class AccountController {
     @Query('withOperations', new ParseOptionalBoolPipe) withOperations?: boolean,
     @Query('withLogs', new ParseOptionalBoolPipe) withLogs?: boolean,
   ) {
-    if ((withScResults === true || withOperations === true || withLogs) && size > 50) {
-      throw new BadRequestException(`Maximum size of 50 is allowed when activating flags 'withScResults', 'withOperations' or 'withLogs'`);
+    if ((withScResults === true || withOperations === true || withLogs) && size > 10000) {
+      throw new BadRequestException(`Maximum size of 10_000 is allowed when activating flags 'withScResults', 'withOperations' or 'withLogs'`);
     }
 
     try {
