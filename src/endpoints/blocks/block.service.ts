@@ -16,6 +16,7 @@ import { QueryType } from "src/common/elastic/entities/query.type";
 import { ElasticQuery } from "src/common/elastic/entities/elastic.query";
 import { ElasticSortOrder } from "src/common/elastic/entities/elastic.sort.order";
 import { CacheInfo } from "src/common/caching/entities/cache.info";
+import { ElasticSourceMethod } from "src/common/elastic/entities/elastic.source.method";
 
 @Injectable()
 export class BlockService {
@@ -85,7 +86,8 @@ export class BlockService {
     let elasticQuery = ElasticQuery.create()
       .withPagination({ from, size })
       .withSort([{ name: 'timestamp', order: ElasticSortOrder.descending }])
-      .withCondition(QueryConditionOptions.must, await this.buildElasticBlocksFilter(filter));
+      .withCondition(QueryConditionOptions.must, await this.buildElasticBlocksFilter(filter))
+      .withSource([{ name: ['txCount'], method: ElasticSourceMethod.exclude }]);
 
     let result = await this.elasticService.getList('blocks', 'hash', elasticQuery);
 
@@ -111,7 +113,7 @@ export class BlockService {
           )
 
           r.miniBlocksCount = r.miniBlocks?.length
-          r.txCount = r.miniBlocks?.reduce((sum: number, item: any) => sum +  item.transactions?.length, 0)
+          r.txCount = r.miniBlocks?.reduce((sum: number, item: any) => sum + item.transactions?.length, 0)
         }
       }
     }

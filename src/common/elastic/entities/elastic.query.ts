@@ -4,6 +4,7 @@ import { ElasticPagination } from "./elastic.pagination";
 import { ElasticSortProperty } from "./elastic.sort.property";
 import { QueryCondition } from "./query.condition";
 import { QueryConditionOptions } from "./query.condition.options";
+import { ElasticSourceProperty } from "./elastic.source.property";
 import { RangeQuery } from "./range.query";
 import { TermsQuery } from "./terms.query";
 
@@ -15,9 +16,18 @@ function buildElasticIndexerSort(sorts: ElasticSortProperty[]): any[] {
   return sorts.map((sortProp: ElasticSortProperty) => ({ [sortProp.name]: { order: sortProp.order } }));
 }
 
+function buildElasticSource(source: ElasticSourceProperty[]): any[] {
+  if (!source) {
+    return [];
+  }
+
+  return Object.fromEntries(source.map(e => [e.method, e.name]))
+}
+
 export class ElasticQuery {
   pagination?: ElasticPagination;
   sort: ElasticSortProperty[] = [];
+  source: ElasticSourceProperty[] = [];
   filter: AbstractQuery[] = [];
   condition: QueryCondition = new QueryCondition();
   terms?: TermsQuery;
@@ -34,6 +44,12 @@ export class ElasticQuery {
 
   withSort(sort: ElasticSortProperty[]): ElasticQuery {
     this.sort = sort;
+
+    return this;
+  }
+
+  withSource(source: ElasticSourceProperty[]): ElasticQuery {
+    this.source = source;
 
     return this;
   }
@@ -78,10 +94,12 @@ export class ElasticQuery {
 
   toJson() {
     const elasticSort = buildElasticIndexerSort(this.sort);
+    const elasticSource = buildElasticSource(this.source);
 
     const elasticQuery = {
       ...this.pagination,
       sort: elasticSort,
+      _source: elasticSource,
       query: {
         bool: {
           filter: this.filter.map(query => query.getQuery()),
