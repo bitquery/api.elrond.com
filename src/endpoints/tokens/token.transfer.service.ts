@@ -59,7 +59,9 @@ export class TokenTransferService {
       for (const event of log.events) {
         const action = this.getOperationAction(event.identifier);
         if (action) {
-          identifiers.push(BinaryUtils.base64Decode(event.topics[0]));
+          if (event.topics != null) {
+            identifiers.push(BinaryUtils.base64Decode(event.topics[0]));
+          }
         }
       }
     }
@@ -171,7 +173,7 @@ export class TokenTransferService {
       operation.data = BinaryUtils.base64Decode(event.data);
     }
 
-    if (event.topics.length > 1 && event.topics[1] != null) {
+    if (event.topics != null && event.topics.length > 1 && event.topics[1] != null) {
       if (event.topics[1] == null)  {
         operation.message = BinaryUtils.base64Decode(event.topics[0]);
       } else {
